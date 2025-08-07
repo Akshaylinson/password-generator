@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Password Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4361ee',
+                        'primary-dark': '#3a56d4',
+                        secondary: '#3f37c9',
+                        danger: '#ef233c',
+                        success: '#4cc9f0',
+                        warning: '#f8961e',
+                    },
+                    boxShadow: {
+                        'input-focus': '0 0 0 2px #4361ee',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .strength-bar::before {
+                content: '';
+                @apply block h-full bg-danger rounded-full;
+                width: var(--strength-width, 0%);
+                background-color: var(--strength-color, theme('colors.danger'));
+                transition: width 0.3s ease, background-color 0.3s ease;
+            }
+            
+            .toast {
+                @apply fixed bottom-5 left-1/2 -translate-x-1/2 translate-y-[100px] 
+                       bg-black/80 text-white px-6 py-3 rounded-lg text-sm opacity-0 
+                       transition-all duration-300 z-50;
+            }
+            
+            .toast.show {
+                @apply opacity-100 translate-y-0;
+            }
+            
+            .monospace {
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white rounded-xl shadow-lg overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-primary to-secondary text-white p-6 text-center">
+            <h1 class="text-xl font-bold flex items-center justify-center gap-2">
+                <i class="fas fa-lock"></i> Secure Password Generator
+            </h1>
+            <p class="text-sm opacity-90 mt-1">Create strong, random passwords</p>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="p-6">
+            <!-- Password Display -->
+            <div class="mb-6">
+                <div class="flex items-center bg-gray-100 rounded-lg p-4 hover:shadow-input-focus transition-all">
+                    <span id="password" class="flex-1 monospace text-gray-800 break-all">Click "Generate Password"</span>
+                    <button id="copy-btn" aria-label="Copy password" class="text-primary hover:bg-primary/10 p-2 rounded-md transition-colors">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+                
+                <!-- Strength Meter -->
+                <div class="mt-3">
+                    <div class="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div class="strength-bar h-full"></div>
+                    </div>
+                    <p id="strength-text" class="text-xs text-gray-500 mt-1">Very Weak</p>
+                </div>
+            </div>
+            
+            <!-- Controls -->
+            <div class="space-y-5">
+                <!-- Length Slider -->
+                <div>
+                    <label for="length" class="flex justify-between text-sm font-medium text-gray-700 mb-1">
+                        Password Length: <span id="length-value" class="font-normal">12</span>
+                    </label>
+                    <input type="range" id="length" min="4" max="32" value="12" 
+                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary hover:[&::-webkit-slider-thumb]:bg-primary-dark hover:[&::-webkit-slider-thumb]:scale-110 [&::-webkit-slider-thumb]:transition-all">
+                </div>
+                
+                <!-- Checkboxes -->
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="uppercase" checked 
+                               class="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary">
+                        <label for="uppercase" class="text-sm text-gray-700 cursor-pointer select-none">Uppercase Letters (A-Z)</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="lowercase" checked 
+                               class="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary">
+                        <label for="lowercase" class="text-sm text-gray-700 cursor-pointer select-none">Lowercase Letters (a-z)</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="numbers" checked 
+                               class="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary">
+                        <label for="numbers" class="text-sm text-gray-700 cursor-pointer select-none">Numbers (0-9)</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="symbols" 
+                               class="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary">
+                        <label for="symbols" class="text-sm text-gray-700 cursor-pointer select-none">Symbols (!@#$%^&*)</label>
+                    </div>
+                </div>
+                
+                <!-- Generate Button -->
+                <button id="generate" class="w-full bg-primary hover:bg-primary-dark text-white font-medium py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors transform hover:-translate-y-0.5 active:translate-y-0">
+                    <i class="fas fa-key"></i> Generate Password
+                </button>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="bg-gray-50 border-t border-gray-200 p-4 text-center">
+            <p class="text-xs text-gray-500">For security, don't reuse passwords across sites.</p>
+        </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">Password copied!</div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
